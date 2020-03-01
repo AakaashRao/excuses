@@ -1,0 +1,42 @@
+\begin{table} \centering
+\caption{Experiment 2: Condition prediction confusion matrices}
+\label{t:2-conditionprediction}
+\begin{threeparttable}
+\begin{tabular}{@{\extracolsep{4pt}}r|cc}
+\toprule
+\multicolumn{3}{l}{\textbf{Panel A}: \textit{Excuse vs. No Excuse}} \\
+\midrule
+& \textbf{Predicted Excuse} & \textbf{Predicted Excuse} \\
+\midrule
+\textbf{True Excuse } & 213 & 244 \\
+\textbf{True No Excuse } & 210 & 210 \\
+\midrule
+\multicolumn{3}{r}{\small \textit{Overall accuracy: } 0.4823 } \\
+\midrule
+\midrule
+\multicolumn{3}{l}{\textbf{Panel B}: \textit{Control vs. No Excuse}} \\
+\midrule
+& \textbf{Predicted Excuse} & \textbf{Predicted Excuse} \\
+\midrule
+\textbf{True Control } & 197 & 180 \\
+\textbf{True No Excuse } & 136 & 283 \\
+\midrule
+\multicolumn{3}{r}{\small \textit{Overall accuracy: } 0.6030 } \\
+\midrule
+\midrule
+\multicolumn{3}{l}{\textbf{Panel C}: \textit{Control vs. Excuse}} \\
+\midrule
+& \textbf{Predicted Excuse} & \textbf{Predicted Excuse} \\
+\midrule
+\textbf{True Control } & 188 & 159 \\
+\textbf{True Excuse } & 136 & 315 \\
+\midrule
+\multicolumn{3}{r}{\small \textit{Overall accuracy: } 0.6303 } \\
+\midrule
+\bottomrule
+\end{tabular}
+\begin{tablenotes} \footnotesize
+\item \textit{Notes:} Each cell reports the number of individuals who were assigned to the condition in the corresponding row and who were classified by the Support Vector Machine as belonging to the condition in the corresponding column. Each panel limits the data to the corresponding two conditions. The classifiers were trained on a 75\% sample of the limited dataset; the table reports prediction results on the test set of the remaining 25\% of the limited dataset. Overall accuracy is calculated as the proportion of correct predictions.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
