@@ -3,6 +3,7 @@ library(haven)
 library(stargazer)
 library(starpolishr)
 library(ggsignif)
+library(multcomp)
 
 tablenotes = rjson::fromJSON(file='code/templates/table-notes.json')
 
@@ -98,6 +99,8 @@ main_results = function(data, drop_previous) {
     summarise(mean = mean(donated), se = sd(donated)/sqrt(n()))
   
   make_figure = function(summary) {
+    textsize = 12
+    titlesize = 13
     plot = ggplot(summary, aes(x = condition, y = mean, fill = condition)) + 
       geom_bar(stat='identity', alpha=0.65, width=0.5) +
       geom_errorbar(aes(ymin = mean-1.96*se, ymax = mean+1.96*se,col = condition), position = 'dodge', alpha=1, width=0.5) +
@@ -107,8 +110,9 @@ main_results = function(data, drop_previous) {
       xlab('Treatment condition') + ylab('Donation rate') + labs(fill = 'Condition') + 
       guides(fill=F, col=F) +
       theme_bw() + 
-      theme(axis.text.x = element_text(size=20), axis.text.y = element_text(size=14),
-            axis.title.x = element_text(size=24), axis.title.y = element_text(size=24))
+      theme(axis.text.x = element_text(size=textsize), axis.text.y = element_text(size=textsize),
+            axis.title.x = element_text(size=titlesize), axis.title.y = element_text(size=titlesize)) +
+      coord_cartesian(ylim=c(0, 0.8))
     
     ggsave(str_interp('output/figures/f2-main${previous_tag}.pdf'), width=8, height=6, plot)
   }

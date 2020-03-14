@@ -86,7 +86,7 @@ make_panel_part = function(data, drop_previous, outcome) {
                   covariate.labels = c(label1, 'Constant'),
                   keep.stat = c('rsq','adj.rsq', 'n'), 
                   dep.var.labels = '',
-                  title = str_interp("Experiment 2: "), label = str_interp('t:1-'),
+                  title = str_interp("Experiment 1: "), label = str_interp('t:1-'),
                   add.lines = list(c('Demographic controls', rep(c('No', 'Yes', 'Yes'), 2)),
                                    c('Partisan affiliation controls', rep(c('No', 'No', 'Yes'), 2))))
 
@@ -122,7 +122,7 @@ consolidate_panels = function(tabletype) {
   }
   panel = c(
     panel1[4],
-    str_interp("  \\caption{Experiment 2: ${tabletitle}}"),
+    str_interp("  \\caption{Experiment 1: ${tabletitle}}"),
     str_interp("  \\label{t:1-${tabletype}}"),
     panel1[7:14],
     '\\midrule',

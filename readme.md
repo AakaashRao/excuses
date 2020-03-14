@@ -11,5 +11,5 @@ Raw data files are available on request from authors. Once raw data files have b
 ### Python 3
 `nltk`, `pandas`, `scikit-learn`
 ### R
-`tidyverse`, `stargazer`, `starpolishr`, `ggsignif`
+`tidyverse`, `stargazer-booktabs` (accessible [here](https://github.com/markwestcott34/stargazer-booktabs)), `starpolishr`, `ggsignif`
 ### Stata

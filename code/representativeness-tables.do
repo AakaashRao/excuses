@@ -1,6 +1,8 @@
 clear all
 set more off
 
+cd "~/Dropbox/Excuses - Social Image/replication"
+
 global raw "data/raw"
 global data "data/working"
 global output "output/tables"
