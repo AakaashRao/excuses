@@ -1,8 +1,6 @@
 clear all
 set more off
 
-cd "~/Dropbox/Excuses - Social Image/replication"
-
 global raw "data/raw"
 global data "data/working"
 global output "output/tables"
@@ -58,7 +56,7 @@ keep age-type weight_w39_final
 
 rename weight_w39_final weight
 
-save "$data/pew"
+save "$data/pew", replace
 	
 ********************************************************
 * DATA PREPARATION - RECEIVER
@@ -134,7 +132,7 @@ replace weight = 1 if weight == . & type != "pew"
 ********************************************************
 * SUMMARY STATISTICS
 ********************************************************
-local sumvar age black asian white hisp male bachelor_more // lt_high_school high_school college_no_degree associate bachelor post_bachelor
+local sumvar age black asian white hisp male bachelor_more // lt_high_school high_school college_no_degree associate bachelor post_bachelor 
 
 local age_label "Age"
 *local age2_label "Age Squared"
@@ -202,13 +200,13 @@ foreach var of varlist `sumvar' {
 
 	local fwt "file write table"
 		
-	local caption "Experiment 1: Sample representativeness"
+	local caption "Experiment 2: Sample representativeness"
 	local cols 2
 	local header "\begin{table}[H] \centering \caption{`caption'} \label{t:1-representativeness} \begin{tabular}{@{\extracolsep{0.1cm}}l*{`cols'}{c}} \toprule"
 	local footer "\end{tabular} \end{table}"
 
 	`fwt' "`header'" _n
-	`fwt' "& Experiment 1 & Pew \\" _n
+	`fwt' "& Experiment 2 & Pew \\" _n
 	`fwt' "\cmidrule(lr){2-2} \cmidrule(lr){3-3} " _n
 	`fwt' "Variables: & (1) & (2) \\" _n 
 	`fwt' "\midrule" _n
@@ -243,7 +241,7 @@ foreach var of varlist `sumvar' {
 
 	`fwt' "\bottomrule" _n
 	`fwt' "\bottomrule" _n
-	`fwt' "\multicolumn{`++cols'}{p{10cm}}{\footnotesize \textit{Notes:} Mean of respondent characteristics in experiment 1 and the 2018 Pew Research Center's American Trends Panel Wave 39. Attriters dropped from sample.}" _n
+	`fwt' "\multicolumn{`++cols'}{p{10cm}}{\footnotesize \textit{Notes:} Mean of respondent characteristics in experiment 2 and the 2018 Pew Research Center's American Trends Panel Wave 39. Attriters dropped from sample.}" _n
 	`fwt' "`footer'" _n
 		
 	file close table
@@ -257,13 +255,13 @@ foreach var of varlist `sumvar' {
 
 	local fwt "file write table"
 	
-	local caption "Experiment 2: Sample representativeness"
+	local caption "Experiment 1: Sample representativeness"
 	local cols 2
 	local header "\begin{table}[H] \centering \caption{`caption'} \label{t:2-representativeness}  \begin{tabular}{@{\extracolsep{0.1cm}}l*{`cols'}{c}} \toprule"
 	local footer "\end{tabular} \end{table}"
 
 	`fwt' "`header'" _n
-	`fwt' "& Experiment 2 & Pew \\" _n
+	`fwt' "& Experiment 1 & Pew \\" _n
 	`fwt' "\cmidrule(lr){2-2} \cmidrule(lr){3-3} " _n
 	`fwt' " & (1) & (2) \\" _n 
 	`fwt' "\midrule" _n
@@ -337,7 +335,7 @@ foreach var of varlist `sumvar' {
 	
 	`fwt' "\bottomrule" _n
 	`fwt' "\bottomrule" _n
-	`fwt' "\multicolumn{`++cols'}{p{10cm}}{\footnotesize \textit{Notes:} Mean of respondent characteristics in experiment 2 and the 2018 Pew Research Center's American Trends Panel Wave 39. Attriters dropped from sample.}" _n
+	`fwt' "\multicolumn{`++cols'}{p{10cm}}{\footnotesize \textit{Notes:} Mean of respondent characteristics in experiment 1 and the 2018 Pew Research Center's American Trends Panel Wave 39. Attriters dropped from sample.}" _n
 	`fwt' "`footer'" _n
 		
 	file close table

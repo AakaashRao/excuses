@@ -1,9 +1,5 @@
 \begin{center}
 \begin{ThreePartTable}
-\begin{TableNotes}
-\footnotesize
-\item \textit{Notes: }Testing testing testing
-\end{TableNotes}
 \begin{longtable}{lc}
 \caption{Experiment 2: Attrition}  \label{t:2-attrition} \\
 \toprule
@@ -11,7 +7,6 @@
  \cmidrule{2-2} 
  & Attrited \\
  & (1) \\
-\midrule
 \endfirsthead
 \multicolumn{1}{c}%
 {\tablename\ \thetable\ -- \textit{Continued from previous page}} \\
@@ -23,5 +18,7 @@
 \midrule \multicolumn{2}{r}{\textit{Continued on next page}} \\
 \endfoot
 \bottomrule
-\insertTableNotes
 \endlastfoot
+\footnotesize
+\insertTableNotes
+

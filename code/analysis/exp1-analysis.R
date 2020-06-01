@@ -1,10 +1,6 @@
-library(tidyverse)
-library(haven)
-library(stargazer)
-library(starpolishr)
-library(ggsignif)
-
-tablenotes = rjson::fromJSON(file='code/templates/table-notes.json')
+source('code/analysis/load.R')
+library(extrafont)
+loadfonts()
 
 motives = read_csv('data/working/exp1-motives.csv')
 
@@ -12,9 +8,9 @@ data_all = read_dta('data/working/exp1.dta') %>%
   filter(previous_lott==0) %>%
   mutate(condition = case_when(
     excuse==1 ~ 'Excuse',
-    noexcuse==1 ~ 'No excuse'
+    noexcuse==1 ~ 'No Excuse'
   ),
-  condition = factor(condition, levels = c('No excuse','Excuse')),
+  condition = factor(condition, levels = c('No Excuse','Excuse')),
   partisan = case_when(
     partisan==-2 ~ 'Strong Dem',
     partisan==-1 ~ 'Weak Dem'
@@ -86,7 +82,7 @@ make_panel_part = function(data, drop_previous, outcome) {
                   covariate.labels = c(label1, 'Constant'),
                   keep.stat = c('rsq','adj.rsq', 'n'), 
                   dep.var.labels = '',
-                  title = str_interp("Experiment 1: "), label = str_interp('t:1-'),
+                  title = str_interp("Experiment 2: "), label = str_interp('t:1-'),
                   add.lines = list(c('Demographic controls', rep(c('No', 'Yes', 'Yes'), 2)),
                                    c('Partisan affiliation controls', rep(c('No', 'No', 'Yes'), 2))))
 
@@ -122,7 +118,7 @@ consolidate_panels = function(tabletype) {
   }
   panel = c(
     panel1[4],
-    str_interp("  \\caption{Experiment 1: ${tabletitle}}"),
+    str_interp("  \\caption{Experiment 2: ${tabletitle}}"),
     str_interp("  \\label{t:1-${tabletype}}"),
     panel1[7:14],
     '\\midrule',
@@ -162,13 +158,12 @@ make_figure = function(data) {
     mutate(word = str_detect(outcome, 'word'),
            outcome = ifelse(str_detect(outcome, 'gullibility'), 'Gullibility', 'Bias'))
   
-  textsize = 12
-  titlesize = 13
+  textsize = 5
   pvals = list()
   pvals[['Gullibilityscore']] = format_p(summary(lm(gullibility_score~condition,data=data))$coefficients['conditionExcuse','Pr(>|t|)'])
   pvals[['Biasscore']] = format_p(summary(lm(cultural_score~condition,data=data))$coefficients['conditionExcuse','Pr(>|t|)'])
-  pvals[['Gullibilityword']] = format_p(summary(lm(bias_word~condition,data=data))$coefficients['conditionExcuse','Pr(>|t|)'])
-  pvals[['Biasword']] = format_p(summary(lm(gullibility_word~condition,data=data))$coefficients['conditionExcuse','Pr(>|t|)'])
+  pvals[['Gullibilityword']] = format_p(summary(lm(gullibility_word~condition,data=data))$coefficients['conditionExcuse','Pr(>|t|)'])
+  pvals[['Biasword']] = format_p(summary(lm(bias_word~condition,data=data))$coefficients['conditionExcuse','Pr(>|t|)'])
   
   outcome_target = 'Gullibility'
   
@@ -181,43 +176,27 @@ make_figure = function(data) {
     plot = ggplot(summary %>% filter(word==(word_target=='word'), outcome==outcome_target), aes(x = condition, y = mean, fill = condition)) + 
       geom_bar(stat='identity', alpha=0.65, width=0.5) +
       geom_errorbar(aes(ymin = mean-1.96*se, ymax = mean+1.96*se,col = condition), position = 'dodge', alpha=1, width=0.5) +
-      geom_signif(comparisons = list(c('No excuse','Excuse')), 
+      geom_signif(comparisons = list(c('No Excuse','Excuse')), 
                   annotations=pvals[[str_interp('${outcome_target}${word_target}')]], 
-                  textsize = 6, y_position = ypos, tip_length = tl) +
-      xlab('Treatment condition') + ylab(lab) + labs(fill = 'Condition') + 
-      guides(fill=F, col=F) +
-      theme_bw() +
-      scale_fill_manual(values=c('#F8766D','#628DFF')) + scale_color_manual(values=c('#F8766D','#628DFF')) +
-      theme(axis.text.x = element_text(size=textsize), axis.text.y = element_text(size=textsize),
-            axis.title.x = element_text(size=titlesize), axis.title.y = element_text(size=titlesize)) +
+                  textsize = textsize, y_position = ypos, tip_length = tl) +
+      ylab(lab) +
       coord_cartesian(ylim = c(0, ylim)) +
-    ggsave(str_interp('output/figures/f1-${outcome_target}${word_target}.pdf'), width=4, height=6, plot)
+      theme_excuses +
+      two_palette
+    
+    ggsave(str_interp('output/figures/f1-${outcome_target}${word_target}.pdf'), width=4, height=4, plot)
   }
   
-  individual_figure('word', 'Gullibility', 0.115, 0.125, 0.07)
-  individual_figure('word', 'Bias', 0.195, 0.21, 0.07)
-  individual_figure('score', 'Bias', 73.3, 77, 0.38)
-  individual_figure('score', 'Gullibility', 74, 78, 0.25)
-  
-  plot = ggplot(summary %>% filter(word, outcome==outcome_target), aes(x = condition, y = mean, fill = condition)) + 
-    geom_bar(stat='identity', alpha=0.65, width=0.5) +
-    geom_errorbar(aes(ymin = mean-1.96*se, ymax = mean+1.96*se,col = condition), position = 'dodge', alpha=1, width=0.5) +
-    geom_signif(comparisons = list(c('No excuse','Excuse')), annotations=pvals[[outcome_target]], 
-                textsize = 6, y_position = 0.2, tip_length = 0.08) +
-    xlab('Treatment condition') + ylab('Fraction using relevant word') + labs(fill = 'Condition') + 
-    guides(fill=F, col=F) + theme_bw() +
-    scale_fill_manual(values=c('#F8766D','#628DFF')) + scale_color_manual(values=c('#F8766D','#628DFF')) +
-    theme(axis.text.x = element_text(size=textsize), axis.text.y = element_text(size=textsize),
-          axis.title.x = element_text(size=titlesize), axis.title.y = element_text(size=titlesize)) +
-    coord_cartesian(ylim = c(0, 0.22)) +
-    
-  ggsave(str_interp('output/figures/f1-${outcome_target}.pdf'), width=4, height=6, plot)
+  individual_figure('word', 'Gullibility', 0.115, 0.125, 0.05)
+  individual_figure('word', 'Bias', 0.195, 0.21, 0.05)
+  individual_figure('score', 'Bias', 73.3, 77, 0.25)
+  individual_figure('score', 'Gullibility', 74, 78, 0.15)
   
 }
 
 attrition = function(data) {
   data = data %>% 
-    mutate(condition = factor(condition, levels = c('No excuse','Excuse')))
+    mutate(condition = factor(condition, levels = c('No Excuse','Excuse')))
   model = lm(attrit ~ age+I(age^2)+race+hisp+male+education+as.factor(partisan)+
                excuse:(age+I(age^2)+race+hisp+male+education+as.factor(partisan)), 
              data=data)
@@ -229,14 +208,18 @@ attrition = function(data) {
                   covariate.labels = c(vars, vars_int),
                   omit = 'Constant',
                   keep.stat = c('rsq','adj.rsq', 'n'), column.labels = c('Respondent attrited post-randomization'),
-                  title = 'Experiment 1: Attrition', label = 't:1-attrition')
+                  title = 'Experiment 2: Attrition', label = 't:1-attrition')
   out = star_notes_tex(out, note.type = 'threeparttable', note = tablenotes[["t1-attrition"]])
   template = readLines('code/templates/longtable-template.txt')
   noexcuse_mean = formatC(mean(data$attrit[data$noexcuse==1], na.rm=T), digits=3, format='f')
   excuse_mean = formatC(mean(data$attrit[data$excuse==1], na.rm=T), digits=3, format='f')
-  out = c(template[1:4], str_interp('\\item \\textit{Notes: }${tablenotes[["t1-attrition"]]}'), template[6:7], "\\caption{Experiment 1: Attrition}  \\label{t:1-attrition} \\\\",
-          template[9:27], out[15:93], str_interp('DV mean (no excuse) & ${noexcuse_mean} \\\\'), str_interp('DV mean (excuse) & ${excuse_mean} \\\\'),
-          out[94:97], c('\\end{longtable}', '\\end{ThreePartTable}', '\\end{center}'))
+  out = c(template[1:21], 
+          out[15:93],
+          str_interp('DV mean (no excuse) & ${noexcuse_mean} \\\\'), str_interp('DV mean (excuse) & ${excuse_mean} \\\\'),
+          out[94:97], 
+          c('\\end{longtable}', '\\end{ThreePartTable}', '\\end{center}'),
+          template[22:23],
+          str_interp('\\textit{Notes: }${tablenotes[["t2-attrition"]]}'))
   
   writeLines(out, con = str_interp('output/tables/t1-attrition.tex'))
   
@@ -267,7 +250,7 @@ make_balance = function(data) {
   rows = map(c('age','black','asian','white','hisp','male','hs','bachelors'), make_row)
   template = readLines('code/templates/exp1-balance-template.tex')
   rows = c(rows[1], '\\addlinespace', rows[2:5], '\\addlinespace', rows[6], '\\addlinespace', rows[7:8])
-  out = c(template[1:2], '\\caption{Experiment 1: Balance of covariates}', 
+  out = c(template[1:2], '\\caption{Experiment 2: Balance of covariates}', 
           '\\label{t:1-balance}',
           template[5:13], unlist(rows), template[14:19])
   writeLines(out, 'output/tables/t1-balance.tex')

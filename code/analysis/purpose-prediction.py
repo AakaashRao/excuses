@@ -18,7 +18,8 @@ with open('code/table-notes.json') as f:
 
 note='test'
 cross_validate = False
-def main(data_path, data_path2, exp):
+def main(data_path, data_path2):
+	exp = '1' if '1' in data_path else '2'
 	data = pd.read_stata(data_path)
 	data2 = pd.read_stata(data_path2)
 	data = data.append(data2).reset_index(drop=True)
@@ -123,6 +124,7 @@ def make_latex(matrix, labels, accuracy, exp):
 		r'\end{table}']
 	return lines
 
-main('data/raw/receiver-pilot-deidentified.dta' , 'data/raw/receiver-main-exp-deidentified.dta', '1')
-main('data/raw/pilot-deidentified.dta', 'data/raw/main-exp-deidentified.dta', '2')
+for exp in range(1,3):
+	main('data/raw/exp{}-pilot-deidentified.dta'.format(exp), 
+		'data/raw/exp{}-mainexp-deidentified.dta'.format(exp))
 

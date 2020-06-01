@@ -1,8 +1,6 @@
 library(tidyverse)
 library(readstata13)
 
-setwd('~/Dropbox/Excuses - Social Image/replication')
-
 # CLEAN PEW DATA (NAs come from 'don't know/refuse to answer' in the raw data)
 pew_all <- read.dta13("data/working/pew.dta") %>%
   mutate(education = case_when(

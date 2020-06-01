@@ -1,26 +1,22 @@
-library(tidyverse)
-library(haven)
-library(stargazer)
-library(starpolishr)
-library(ggsignif)
+source('code/analysis/load.R')
+library(extrafont)
+loadfonts()
 library(multcomp)
-
-tablenotes = rjson::fromJSON(file='code/templates/table-notes.json')
 
 data_all = read_dta('data/working/exp2.dta') %>% 
   mutate(condition = case_when(
     excuse==1 ~ 'Excuse',
-    noexcuse==1 ~ 'No excuse',
+    noexcuse==1 ~ 'No Excuse',
     control==1 ~ 'Control'
   ),
-  condition = factor(condition, levels = c('No excuse','Control','Excuse')),
+  condition = factor(condition, levels = c('No Excuse','Control','Excuse')),
   partisan = case_when(
     partisan== -1 ~ 'Dem-leaning Ind',
     partisan== 1 ~ 'Rep-leaning Ind',
     partisan== 2 ~ 'Weak Rep',
     partisan== 3 ~ 'Strong Rep'
   ),
-  partisan = factor(partisan, levels=c('Dem-leaning Ind', 'Rep-leaning Ind', 'Weak Rep','Strong Rep')),
+  #partisan = factor(partisan, levels=c('Dem-leaning Ind', 'Rep-leaning Ind', 'Weak Rep','Strong Rep')),
   education = ifelse(education %in% c('Professional degree (JD, MD)', 'Doctoral degree', "Master's degree"), 'Post-bachelor degree', education),
   education = factor(education, levels = c('Less than high school degree', 
                                            'High school graduate (high school diploma or equivalent including GED)',
@@ -74,7 +70,7 @@ main_results = function(data, drop_previous) {
                   omit='age|race|hisp|male|partisan|education|Constant',
                   covariate.labels = c('Excuse', 'Control'),
                   keep.stat = c('rsq','adj.rsq', 'n'), dep.var.labels = 'Donated to Fund the Wall',
-                  title = 'Experiment 2: Main results', label = 't:2-main',
+                  title = 'Experiment 1: Main results', label = 't:2-main',
                   add.lines = list(c('Demographic controls', rep(c('No', 'Yes', 'Yes'), 2)),
                                    c('Partisan affiliation controls', rep(c('No', 'No', 'Yes'), 2)),
                                    c('p-value (Excuse = Control)', getp(model1), getp(model2), getp(model3), 
@@ -94,26 +90,26 @@ main_results = function(data, drop_previous) {
   writeLines(out, con = str_interp('output/tables/t2-main${previous_tag}-slides.tex'))
   
   summary = data %>% 
-    mutate(condition = factor(condition, levels = c('Control','No excuse', 'Excuse'))) %>%
+    mutate(condition = factor(condition, levels = c('Control','No Excuse', 'Excuse'))) %>%
     group_by(condition) %>% 
     summarise(mean = mean(donated), se = sd(donated)/sqrt(n()))
   
   make_figure = function(summary) {
-    textsize = 12
-    titlesize = 13
+    
+    textsize=5
+    tl = 0.1
+    
     plot = ggplot(summary, aes(x = condition, y = mean, fill = condition)) + 
       geom_bar(stat='identity', alpha=0.65, width=0.5) +
       geom_errorbar(aes(ymin = mean-1.96*se, ymax = mean+1.96*se,col = condition), position = 'dodge', alpha=1, width=0.5) +
-      geom_signif(comparisons = list(c('No excuse','Excuse')), annotations=str_interp('p=${p_excuse_noexcuse}'), textsize = 6, y_position = 0.62, tip_length = 0.2) +
-      geom_signif(comparisons = list(c('Control','Excuse')), annotations=str_interp('p=${p_excuse_control}'), textsize = 6, y_position=0.69, tip_length=0.2) +
-      geom_signif(comparisons = list(c('Control','No excuse')), annotations=str_interp('p=${p_control_noexcuse}'), textsize = 6, y_position=0.55, tip_length = 0.2) +
-      xlab('Treatment condition') + ylab('Donation rate') + labs(fill = 'Condition') + 
-      guides(fill=F, col=F) +
-      theme_bw() + 
-      theme(axis.text.x = element_text(size=textsize), axis.text.y = element_text(size=textsize),
-            axis.title.x = element_text(size=titlesize), axis.title.y = element_text(size=titlesize)) +
-      coord_cartesian(ylim=c(0, 0.8))
+      geom_signif(comparisons = list(c('No Excuse','Excuse')), annotations=str_interp('p=${p_excuse_noexcuse}'), textsize = textsize, y_position = 0.62, tip_length = tl) +
+      geom_signif(comparisons = list(c('Control','Excuse')), annotations=str_interp('p=${p_excuse_control}'), textsize = textsize, y_position=0.69, tip_length=tl) +
+      geom_signif(comparisons = list(c('Control','No Excuse')), annotations=str_interp('p=${p_control_noexcuse}'), textsize = textsize, y_position=0.55, tip_length = tl) +
+      ylab('Donation rate') +
+      coord_cartesian(ylim=c(0, 0.8)) +
+      theme_excuses
     
+      
     ggsave(str_interp('output/figures/f2-main${previous_tag}.pdf'), width=8, height=6, plot)
   }
   make_figure(summary)
@@ -156,7 +152,7 @@ party_heterogeneity = function(data, drop_previous) {
                   covariate.labels = c('Excuse', 'Control'),
                   column.separate = c(2, 2), column.labels = c('Republicans', 'Independents'),
                   keep.stat = c('rsq','adj.rsq', 'n'), dep.var.labels = 'Donated to Fund the Wall',
-                  title = 'Experiment 2: Party heterogeneity', label = 't:2-partyheterogeneity',
+                  title = 'Experiment 1: Party heterogeneity', label = 't:2-partyheterogeneity',
                   add.lines = list(c('Demographic controls', rep('Yes', 4)),
                                    c('Partisan affiliation controls', rep('Yes', 4)),
                                    c('p-value (Excuse = Control)', getp(model1), getp(model2), getp(model3), getp(model4))))
@@ -171,26 +167,36 @@ party_heterogeneity = function(data, drop_previous) {
              con = str_interp('output/tables/t2-partyheterogeneity${previous_tag}.tex'))
   
   summary = data %>% 
+    mutate(condition = factor(condition, levels = c('Control','No Excuse', 'Excuse'))) %>%
     group_by(condition, rep) %>% 
     summarise(mean = mean(donated), se = sd(donated)/sqrt(n())) %>%
     mutate(party= ifelse(rep==1, 'Republican', 'Independent'))
 
+  textsize=4.5
+  tl = 0.06
+  
   plot = ggplot(summary %>% dplyr::filter(party=='Republican'), aes(x = condition, y = mean, fill = condition)) + 
     geom_bar(stat='identity', alpha=0.65, width=0.5) +
     geom_errorbar(aes(ymin = mean-1.96*se, ymax = mean+1.96*se,col = condition), position = 'dodge', alpha=1, width=0.5) +
-    geom_signif(comparisons = list(c('No excuse','Excuse')), annotations=str_interp('p=${p_excuse_noexcuse_rep}'), textsize = 8, y_position = 0.82, tip_length = 0.2) +
-    geom_signif(comparisons = list(c('Control','Excuse')), annotations=str_interp('p=${p_excuse_control_rep}'), textsize = 8, y_position=0.89, tip_length=0.2) +
-    geom_signif(comparisons = list(c('Control','No excuse')), annotations=str_interp('p=${p_control_noexcuse_rep}'), textsize = 8, y_position=0.75, tip_length = 0.2) +
-    xlab('Treatment condition') + ylab('Donation rate') + labs(fill = 'Condition') + guides(fill=F, col=F) + coord_cartesian(ylim=c(0, 0.95))
+    geom_signif(comparisons = list(c('No Excuse','Excuse')), annotations=str_interp('p=${p_excuse_noexcuse_rep}'), textsize = textsize, y_position = 0.82, tip_length = tl) +
+    geom_signif(comparisons = list(c('Control','Excuse')), annotations=str_interp('p=${p_excuse_control_rep}'), textsize = textsize, y_position=0.89, tip_length=tl) +
+    geom_signif(comparisons = list(c('Control','No Excuse')), annotations=str_interp('p=${p_control_noexcuse_rep}'), textsize = textsize, y_position=0.75, tip_length = tl) +
+    ylab('Donation rate') + 
+    coord_cartesian(ylim=c(0, 0.95)) +
+    theme_excuses
+
   ggsave(str_interp('output/figures/f2-partyheterogeneity-rep${previous_tag}.pdf'), width=4.96, height=6.33, units='in', plot)
   
   plot = ggplot(summary %>% dplyr::filter(party=='Independent'), aes(x = condition, y = mean, fill = condition)) + 
     geom_bar(stat='identity', alpha=0.65, width=0.5) +
     geom_errorbar(aes(ymin = mean-1.96*se, ymax = mean+1.96*se,col = condition), position = 'dodge', alpha=1, width=0.5) +
-    geom_signif(comparisons = list(c('No excuse','Excuse')), annotations=str_interp('p=${p_excuse_noexcuse_ind}'), textsize = 8, y_position = 0.49, tip_length = 0.2) +
-    geom_signif(comparisons = list(c('Control','Excuse')), annotations=str_interp('p=${p_excuse_control_ind}'), textsize = 8, y_position=0.56, tip_length=0.2) +
-    geom_signif(comparisons = list(c('Control','No excuse')), annotations=str_interp('p=${p_control_noexcuse_ind}'), textsize = 8, y_position=0.42, tip_length = 0.2) +
-    xlab('Treatment condition') + ylab('Donation rate') + labs(fill = 'Condition') + guides(fill=F, col=F) + coord_cartesian(ylim=c(0, 0.95))
+    geom_signif(comparisons = list(c('No Excuse','Excuse')), annotations=str_interp('p=${p_excuse_noexcuse_ind}'), textsize = textsize, y_position = 0.46, tip_length = tl) +
+    geom_signif(comparisons = list(c('Control','Excuse')), annotations=str_interp('p=${p_excuse_control_ind}'), textsize = textsize, y_position=0.5, tip_length=tl) +
+    geom_signif(comparisons = list(c('Control','No Excuse')), annotations=str_interp('p=${p_control_noexcuse_ind}'), textsize = textsize, y_position=0.42, tip_length = tl) +
+    ylab('Donation rate') +
+    coord_cartesian(ylim=c(0, 0.55)) +
+    theme_excuses
+  
   ggsave(str_interp('output/figures/f2-partyheterogeneity-ind${previous_tag}.pdf'), width=4.96, height=6.33, units='in', plot)
 }
 
@@ -216,7 +222,7 @@ city_heterogeneity = function(data, drop_previous) {
                   covariate.labels = c('Excuse', 'Excuse $\\times$ County Republican vote share', 'Control', 'Control $\\times$ County Republican vote share', 'County Republican vote share'),
                   column.separate = c(2, 2, 2), column.labels = c('All', 'Republicans', 'Independents'),
                   keep.stat = c('rsq','adj.rsq', 'n'), dep.var.labels = 'Donated to Fund the Wall',
-                  title = 'Experiment 2: County heterogeneity', label = 't:2-cityheterogeneity',
+                  title = 'Experiment 1: County heterogeneity', label = 't:2-cityheterogeneity',
                   add.lines = list(c('Demographic controls', rep('Yes', 6)),
                                    c('Partisan affiliation controls', rep('Yes', 6))))
   mean_main = formatC(mean(data$donated[data$main==1]), digits=3, format='f')
@@ -240,7 +246,7 @@ city_heterogeneity = function(data, drop_previous) {
                   order = paste0("^", vars.order , "$"),
                   covariate.labels = c('Excuse', 'Excuse $\\times$ Rep share', 'Rep share'),
                   keep.stat = c('rsq', 'n'), dep.var.labels = 'Donated to Fund the Wall',
-                  title = 'Experiment 2: County heterogeneity', label = 't:2-cityheterogeneity-slides')
+                  title = 'Experiment 1: County heterogeneity', label = 't:2-cityheterogeneity-slides')
   pilot_note = 'Include pilot data & No & Yes \\\\'  
   means = str_interp('DV mean & ${mean_main} & ${mean_all} \\\\')
   sds = str_interp('DV std. dev. & ${sd_main} & ${sd_all} \\\\')
@@ -271,7 +277,7 @@ purpose = function(data) {
                   omit='age|race|hisp|male|partisan|education|Constant',
                   covariate.labels = c('Excuse', 'Control'),
                   keep.stat = c('rsq','adj.rsq', 'n'), dep.var.labels = c('Excuse','Immigration attitudes','Public image','Information','Persuasion','Biased'),
-                  title = 'Experiment 2: Perceived purpose of study', label = 't:2-purpose',
+                  title = 'Experiment 1: Perceived purpose of study', label = 't:2-purpose',
                   add.lines = list(c('Demographic controls', rep('Yes', 6)),
                                    c('Partisan affiliation controls', rep('Yes',6 )),
                                    c('p-value (Excuse = Control)', getp(excuse_model), getp(immigration_attitude_model), 
@@ -298,7 +304,7 @@ purpose = function(data) {
 
 attrition = function(data) {
   data = data %>% 
-    mutate(condition = factor(condition, levels = c('No excuse','Control','Excuse')))
+    mutate(condition = factor(condition, levels = c('No Excuse','Control','Excuse')))
   model = lm(attrit ~ age+I(age^2)+race+hisp+male+education+as.factor(partisan)+
                excuse:(age+I(age^2)+race+hisp+male+education+as.factor(partisan)), 
              data=data %>% filter(!control))
@@ -310,17 +316,20 @@ attrition = function(data) {
                   covariate.labels = c(vars, vars_int),
                   omit = 'Constant',
                   keep.stat = c('rsq','adj.rsq', 'n'), column.labels = c('Respondent attrited post-randomization'),
-                  title = 'Experiment 2: Attrition', label = 't:2-attrition')
+                  title = 'Experiment 1: Attrition', label = 't:2-attrition')
   out = star_notes_tex(out, note.type = 'threeparttable', note = tablenotes[["t2-attrition"]])
   template = readLines('code/templates/longtable-template.txt')
   noexcuse_mean = formatC(mean(data$attrit[data$noexcuse==1], na.rm=T), digits=3, format='f')
   excuse_mean = formatC(mean(data$attrit[data$excuse==1], na.rm=T), digits=3, format='f')
-  out = c(template[1:4], str_interp('\\item \\textit{Notes: }${tablenotes[["t2-attrition"]]}'),
-          template[6:27], out[14:104], str_interp('DV mean (no excuse) & ${noexcuse_mean} \\\\'), str_interp('DV mean (excuse) & ${excuse_mean} \\\\'),
-          out[104:108], c('\\end{longtable}', '\\end{ThreePartTable}', '\\end{center}'))
+  out = c(template[1:21], 
+          out[14:104], 
+          str_interp('DV mean (no excuse) & ${noexcuse_mean} \\\\'), str_interp('DV mean (excuse) & ${excuse_mean} \\\\'),
+          out[104:108], 
+          c('\\end{longtable}', '\\end{ThreePartTable}', '\\end{center}'),
+          template[22:23],
+          str_interp('\\textit{Notes: }${tablenotes[["t2-attrition"]]}'))
   
   writeLines(out, con = str_interp('output/tables/t2-attrition.tex'))
-  
 }
 
 make_balance = function(data) {
@@ -355,21 +364,42 @@ make_balance = function(data) {
   rows = c(rows[1], '\\addlinespace', rows[2:5], '\\addlinespace', rows[6], '\\addlinespace', rows[7:8], '\\addlinespace', rows[9])
   
   template = readLines('code/templates/exp2-balance-template.tex')
-  out = c(template[1:2], '\\caption{Experiment 2: Balance of covariates}', 
+  out = c(template[1:2], '\\caption{Experiment 1: Balance of covariates}', 
           '\\label{t:2-balance}', template[5:13], unlist(rows), template[14:19])
   writeLines(out, 'output/tables/t2-balance.tex')
   out = c(out[1:2], out[4:29], '\\end{threeparttable} \\end{table}')
   writeLines(out, 'output/tables/t2-balance-slides.tex')
 }
 
+make_starbility = function(data) {
+  data$age2 = data$age^2
+  data$partisan = as.factor(data$partisan)
+  perm_controls = c(
+    'Age, age squared' = 'age+age2',
+    'Race' = 'race',
+    'Hispanic origin' = 'hisp',
+    'Education' = 'education',
+    'Partisan affiliation' = 'partisan',
+    'Republican vote share of county' = 'share_rep'
+  )
+  stability_plot(data=data %>% filter(condition!='control'),
+                 lhs='donated',
+                 rhs='excuse',
+                 perm=perm_controls,
+                 coef_ylim = c(0, 0.15),
+                 trip_top=3,
+                 font = 'LM Roman 10')
+  ggsave('output/figures/f2-starbility.png', height=4, width=6)
+}
+
 for (dp in c(T, F)) {
   main_results(data, drop_previous = dp)
   party_heterogeneity(data, drop_previous = dp)
   city_heterogeneity(data, drop_previous=dp)
-  purpose(data)
-  attrition(data_all)
-  make_balance(data)
 }
-
+purpose(data)
+attrition(data_all)
+make_balance(data)
+make_starbility(data)
 
 

@@ -13,13 +13,12 @@ from sklearn import metrics
 from sklearn.metrics import confusion_matrix
 import json
 
-with open('code/templates/table-notes.json') as f:
+with open('code/table-notes.json') as f:
 	notes = json.load(f)
 
 note='test'
 cross_validate = False
-def main(data_path, data_path2):
-	exp = '1' if '1' in data_path else '2'
+def main(data_path, data_path2, exp):
 	data = pd.read_stata(data_path)
 	data2 = pd.read_stata(data_path2)
 	data = data.append(data2).reset_index(drop=True)
@@ -33,7 +32,7 @@ def main(data_path, data_path2):
 	matrices.append(confusion_matrices(data, ['excuse','noexcuse'], exp))
 	if exp=='1':
 		consolidated = [matrices[0][0], \
-						'\\caption{Experiment 1: Condition prediction confusion matrix}',
+						'\\caption{Experiment 2: Condition prediction confusion matrix}',
 						'\\label{t:1-conditionprediction}'] +\
 					   matrices[0][3:6] +\
 					   [r'& \textbf{Predicted Excuse} & \textbf{Predicted Excuse} \\'] +\
@@ -54,7 +53,7 @@ def main(data_path, data_path2):
 						r'& \textbf{Predicted Excuse} & \textbf{Predicted Excuse} \\',
 						r'\midrule']
 		consolidated = [matrices[0][0], \
-						'\\caption{Experiment 2: Condition prediction confusion matrices}',
+						'\\caption{Experiment 1: Condition prediction confusion matrices}',
 						'\\label{t:2-conditionprediction}'] +\
 					   matrices[0][3:6] +\
 					   [r'\multicolumn{3}{l}{\textbf{Panel A}: \textit{Excuse vs. No Excuse}} \\'] +\
@@ -124,7 +123,6 @@ def make_latex(matrix, labels, accuracy, exp):
 		r'\end{table}']
 	return lines
 
-for exp in range(1,3):
-	main('data/raw/exp{}-pilot-deidentified.dta'.format(exp), 
-		'data/raw/exp{}-mainexp-deidentified.dta'.format(exp))
+main('data/raw/exp1-pilot-deidentified.dta' , 'data/raw/exp1-mainexp-deidentified.dta', '1')
+main('data/raw/exp2-pilot-deidentified.dta', 'data/raw/exp2-mainexp-deidentified.dta', '2')
 
