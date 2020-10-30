@@ -200,13 +200,13 @@ foreach var of varlist `sumvar' {
 
 	local fwt "file write table"
 		
-	local caption "Experiment 2: Sample representativeness"
+	local caption "Experiment 1: Sample representativeness"
 	local cols 2
 	local header "\begin{table}[H] \centering \caption{`caption'} \label{t:1-representativeness} \begin{tabular}{@{\extracolsep{0.1cm}}l*{`cols'}{c}} \toprule"
 	local footer "\end{tabular} \end{table}"
 
 	`fwt' "`header'" _n
-	`fwt' "& Experiment 2 & Pew \\" _n
+	`fwt' "& Experiment 1 & Pew \\" _n
 	`fwt' "\cmidrule(lr){2-2} \cmidrule(lr){3-3} " _n
 	`fwt' "Variables: & (1) & (2) \\" _n 
 	`fwt' "\midrule" _n
@@ -255,13 +255,13 @@ foreach var of varlist `sumvar' {
 
 	local fwt "file write table"
 	
-	local caption "Experiment 1: Sample representativeness"
+	local caption "Experiment 2: Sample representativeness"
 	local cols 2
 	local header "\begin{table}[H] \centering \caption{`caption'} \label{t:2-representativeness}  \begin{tabular}{@{\extracolsep{0.1cm}}l*{`cols'}{c}} \toprule"
 	local footer "\end{tabular} \end{table}"
 
 	`fwt' "`header'" _n
-	`fwt' "& Experiment 1 & Pew \\" _n
+	`fwt' "& Experiment 2 & Pew \\" _n
 	`fwt' "\cmidrule(lr){2-2} \cmidrule(lr){3-3} " _n
 	`fwt' " & (1) & (2) \\" _n 
 	`fwt' "\midrule" _n

@@ -22,7 +22,8 @@ make_figure = function() {
     group_by(condition) %>% 
     summarise(mean = mean(support_ban),
               n = n(),
-              se = sd(support_ban)/sqrt(n))
+              se = sd(support_ban)/sqrt(n),
+              value = str_pad(round(mean, 2), 2))
   print(summary)
   
   tl = 0.05
@@ -34,6 +35,7 @@ make_figure = function() {
                 annotations= 'p<0.001', 
                 textsize = 4, y_position = 0.6, tip_length = tl) +
     coord_cartesian(ylim=c(0, 0.65)) +
+    geom_text(aes(x=condition, y = 0.02, label=value, vjust='bottom'), family = 'LM Roman 10', size = 4.5) +
     ylab('Mean support') + 
     theme_excuses +
     two_palette

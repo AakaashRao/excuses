@@ -3,6 +3,8 @@ gen main=1
 append using "data/raw/exp2-pilot-deidentified.dta"
 replace main=0 if missing(main)
 lab var main "Part of main experiment (1=main exp, 0=pilot)"
+gen replication = 0
+lab var replication "Replication experiment"
 
 * Drop pre-randomization attritters and flag post-randomization attriters
 drop if !inlist(condition, "excuse", "noexcuse", "control")

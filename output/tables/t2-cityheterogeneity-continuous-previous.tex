@@ -1,8 +1,8 @@
 
 % Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-% Date and time: Mon, May 25, 2020 - 16:47:51
+% Date and time: Wed, Oct 28, 2020 - 22:50:03
 \begin{table}[!htbp] \centering 
-  \caption{Experiment 1: County heterogeneity} 
+  \caption{Experiment 2: County heterogeneity} 
   \label{t:2-cityheterogeneity} 
 \begin{threeparttable}
 \begin{tabular}{@{\hspace{5pt}}l@{\hspace{5pt}}cccccc} 
@@ -11,40 +11,37 @@
 \cmidrule(rr){2-7} 
  & \multicolumn{6}{c}{Donated to Fund the Wall} \\ 
  \cmidrule(rr){2-7}
- & \multicolumn{2}{c}{All} & \multicolumn{2}{c}{Republicans} & \multicolumn{2}{c}{Independents} \\ 
  & (1) & (2) & (3) & (4) & (5) & (6)\\ 
 \midrule  
-\\[-2.1ex] Excuse & 0.066$^{***}$ & 0.073$^{***}$ & 0.065$^{**}$ & 0.072$^{***}$ & 0.066$^{***}$ & 0.075$^{***}$ \\ 
-  & (0.018) & (0.016) & (0.029) & (0.024) & (0.024) & (0.022) \\ 
+\\[-2.1ex] Excuse & 0.065$^{***}$ & 0.067$^{***}$ & 0.074$^{***}$ & 0.041 & 0.026 & 0.064$^{***}$ \\ 
+  & (0.020) & (0.018) & (0.016) & (0.029) & (0.027) & (0.014) \\ 
  \addlinespace 
- Excuse $\times$ County Republican vote share & $-$0.042$^{**}$ & $-$0.041$^{**}$ & $-$0.017 & $-$0.017 & $-$0.062$^{**}$ & $-$0.061$^{***}$ \\ 
-  & (0.018) & (0.016) & (0.028) & (0.025) & (0.024) & (0.022) \\ 
+ Excuse $\times$ County Republican vote share & $-$0.036$^{*}$ & $-$0.042$^{**}$ & $-$0.042$^{**}$ & $-$0.069$^{**}$ & $-$0.079$^{***}$ & $-$0.047$^{***}$ \\ 
+  & (0.020) & (0.018) & (0.016) & (0.027) & (0.026) & (0.014) \\ 
  \addlinespace 
- Control & $-$0.003 & $-$0.001 & $-$0.002 & $-$0.001 & 0.006 & 0.008 \\ 
-  & (0.018) & (0.017) & (0.028) & (0.026) & (0.024) & (0.023) \\ 
+ Control & $-$0.003 & $-$0.003 & $-$0.001 &  &  & 0.015 \\ 
+  & (0.020) & (0.018) & (0.017) &  &  & (0.016) \\ 
  \addlinespace 
- Control $\times$ County Republican vote share & 0.021 & 0.019 & 0.025 & 0.017 & 0.019 & 0.020 \\ 
-  & (0.013) & (0.012) & (0.020) & (0.017) & (0.017) & (0.016) \\ 
+ Control $\times$ County Republican vote share & 0.006 & 0.007 & 0.007 &  &  & 0.014 \\ 
+  & (0.020) & (0.018) & (0.017) &  &  & (0.016) \\ 
  \addlinespace 
- County Republican vote share & 0.006 & 0.007 & $-$0.018 & $-$0.015 & 0.027 & 0.024 \\ 
-  & (0.018) & (0.017) & (0.028) & (0.026) & (0.024) & (0.022) \\ 
+ County Republican vote share & 0.055$^{***}$ & 0.022 & 0.019 & 0.012 & 0.027 & 0.018$^{*}$ \\ 
+  & (0.014) & (0.013) & (0.012) & (0.019) & (0.019) & (0.010) \\ 
  \addlinespace 
 \midrule  
-Demographic controls & Yes & Yes & Yes & Yes & Yes & Yes \\ 
-Partisan affiliation controls & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Demographic controls & No & Yes & Yes & No & Yes & Yes \\ 
+Waves included & Main & Main & Main + Pilot & Replication & Replication & All \\ 
 \midrule
-Include pilot data & No & Yes & No & Yes & No & Yes \\
-\addlinespace
-DV mean & 0.490 & 0.499 & 0.490 & 0.499 & 0.490 & 0.499 \\
+DV mean & 0.489 & 0.489 & 0.498 & 0.497 & 0.497 & 0.498 \\
 DV std. dev. & 0.500 & 0.500 & 0.500 & 0.500 & 0.500 & 0.500 \\
-Observations & 3,709 & 4,393 & 1,588 & 1,957 & 2,121 & 2,436 \\ 
-R$^{2}$ & 0.191 & 0.201 & 0.075 & 0.076 & 0.141 & 0.155 \\ 
-Adjusted R$^{2}$ & 0.186 & 0.198 & 0.065 & 0.067 & 0.133 & 0.149 \\ 
+Observations & 3,709 & 3,709 & 4,393 & 1,215 & 1,215 & 5,608 \\ 
+R$^{2}$ & 0.013 & 0.191 & 0.201 & 0.009 & 0.133 & 0.176 \\ 
+Adjusted R$^{2}$ & 0.012 & 0.186 & 0.198 & 0.007 & 0.120 & 0.173 \\ 
 \bottomrule 
 \end{tabular} 
 \begin{tablenotes}
 \footnotesize
-\item \textit{Notes:} The dependent variable is an indicator taking value 1 if the respondent donated to Fund the Wall. The county Republican vote share is from the 2016 US Presidential election and is scaled to a standard normal distribution. Columns 1-2 include both Independents and Republicans, Columns 3-4 limit the sample to Republicans, and Columns 5-6 limit the sample to Independents. Columns 1, 3, and 5 report results estimated on the sample from the main experiment, while Columns 2, 4, and 6 pool the sample from the main experiment with the sample from the pilot. Demographic controls include age, age squared, a set of race indicators, a Hispanic indicator, a male indicator, and a set of education indicators. Partisan affiliation controls include dummies for strong Republican, weak Republican, Republican-leaning Independent, and Democrat-leaning Independent. Robust standard errors are reported.
+\item \textit{Notes:} The dependent variable is an indicator taking value 1 if the respondent donated to Fund the Wall. The county Republican vote share is from the 2016 US Presidential election and is scaled to a standard normal distribution. Columns 1-2 include both Independents and Republicans, Columns 3-4 limit the sample to Republicans, and Columns 5-6 limit the sample to Independents. Columns 1, 3, and 5 report results estimated on the sample from the main experiment, while Columns 2, 4, and 6 pool the sample from the main experiment with the sample from the pilot. Demographic controls include age, age squared, a set of race indicators, a Hispanic indicator, a male indicator, and a set of education indicators, and a set of partisan affiliation indicators. Robust standard errors are reported.
 \end{tablenotes}
 \end{threeparttable}
 \end{table} 

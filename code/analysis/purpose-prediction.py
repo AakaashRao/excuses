@@ -16,7 +16,6 @@ import json
 with open('code/table-notes.json') as f:
 	notes = json.load(f)
 
-note='test'
 cross_validate = False
 def main(data_path, data_path2):
 	exp = '1' if '1' in data_path else '2'

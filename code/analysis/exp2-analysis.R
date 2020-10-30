@@ -3,7 +3,8 @@ library(extrafont)
 loadfonts()
 library(multcomp)
 
-data_all = read_dta('data/working/exp2.dta') %>% 
+data_all = read_dta('data/working/exp2.dta') %>%
+  bind_rows(read_dta('data/working/exp2b.dta')) %>% 
   mutate(condition = case_when(
     excuse==1 ~ 'Excuse',
     noexcuse==1 ~ 'No Excuse',
@@ -16,7 +17,7 @@ data_all = read_dta('data/working/exp2.dta') %>%
     partisan== 2 ~ 'Weak Rep',
     partisan== 3 ~ 'Strong Rep'
   ),
-  #partisan = factor(partisan, levels=c('Dem-leaning Ind', 'Rep-leaning Ind', 'Weak Rep','Strong Rep')),
+  partisan = factor(partisan, levels=c('Dem-leaning Ind', 'Rep-leaning Ind', 'Weak Rep','Strong Rep')),
   education = ifelse(education %in% c('Professional degree (JD, MD)', 'Doctoral degree', "Master's degree"), 'Post-bachelor degree', education),
   education = factor(education, levels = c('Less than high school degree', 
                                            'High school graduate (high school diploma or equivalent including GED)',
@@ -28,12 +29,15 @@ data_all = read_dta('data/working/exp2.dta') %>%
   race = factor(race, levels = c('Other', 'African American/Black', 'Asian/Asian American', 'Caucasian/White')),
   agesq = age^2)
 
-data = data_all %>% dplyr::filter(attrit!=1)
+shares = read_csv('data/raw/exp2-rep-shares.csv') %>% 
+  bind_rows(read_csv('data/raw/exp2b-rep-shares.csv'))
 
-shares = read_csv('data/raw/exp2-rep-shares.csv') 
-data = data %>% inner_join(shares, by='responseid') %>%
-  mutate(repshare_bin = as.factor(ntile(share_rep, 2)),
-         share_rep = scale(share_rep))
+data = data_all %>% dplyr::filter(attrit!=1) %>% 
+  left_join(shares, by='responseid') %>%
+  mutate(share_rep = scale(share_rep))
+
+allwaves = data
+data = data %>% filter(replication==0)
 
 getp = function(model) {
   p = summary(glht(model, linfct = c("excuse - control = 0")))$test$pvalues[1]
@@ -51,53 +55,59 @@ main_results = function(data, drop_previous) {
   } else {
     previous_tag = '-previous'
   }
+  
   model1 = lm(donated~excuse+control, data=data %>% dplyr::filter(main==1))
-  model2 = lm(donated~excuse+control+age+I(age^2)+race+hisp+male+education, data=data %>% dplyr::filter(main==1))
-  model3 = lm(donated~excuse+control+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=data  %>% dplyr::filter(main==1))
-  model4 = lm(donated~excuse+control, data=data)
-  model5 = lm(donated~excuse+control+age+I(age^2)+race+hisp+male+education, data=data)
-  model6 = lm(donated~excuse+control+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=data)
+  model2 = lm(donated~excuse+control+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=data %>% dplyr::filter(main==1))
+  model3 = lm(donated~excuse+control+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=data)
+  model4 = lm(donated~excuse, data=allwaves %>% dplyr::filter(replication==1))
+  model5 = lm(donated~excuse+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=allwaves %>% dplyr::filter(replication==1))
+  model6 = lm(donated~excuse+control+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=allwaves)
+
   pvalues = summary(model1)$coefficients[,'Pr(>|t|)']
   p_excuse_noexcuse = format.pval(pvalues['excuse'], digits=3)
   p_control_noexcuse = format.pval(pvalues['control'], digits=3)
   p_excuse_control = getp(model1)
+  
   mean_main = formatC(mean(data$donated[data$main==1]), digits=3, format='f')
-  mean_all = format(mean(data$donated), digits=3, format='f')
+  mean_pil = format(mean(data$donated), digits=3, format='f')
+  mean_rep = formatC(mean(allwaves$donated[allwaves$replication==1]), digits=3, format='f')
+  mean_all = format(mean(allwaves$donated), digits=3, format='f')
   sd_main = formatC(sd(data$donated[data$main==1]), format='f', digits=3)
-  sd_all = formatC(sd(data$donated), digits=3, format='f')
+  sd_pil = formatC(sd(data$donated), digits=3, format='f')
+  sd_rep = formatC(sd(allwaves$donated[allwaves$replication==1]), digits=3, format='f')
+  sd_all = formatC(sd(allwaves$donated), digits=3, format='f')
   
   out = stargazer(list(model1, model2, model3, model4, model5, model6), 
                   omit='age|race|hisp|male|partisan|education|Constant',
                   covariate.labels = c('Excuse', 'Control'),
                   keep.stat = c('rsq','adj.rsq', 'n'), dep.var.labels = 'Donated to Fund the Wall',
-                  title = 'Experiment 1: Main results', label = 't:2-main',
+                  title = 'Experiment 2: Main results', label = 't:2-main',
                   add.lines = list(c('Demographic controls', rep(c('No', 'Yes', 'Yes'), 2)),
-                                   c('Partisan affiliation controls', rep(c('No', 'No', 'Yes'), 2)),
+                                   c('Waves included', 'Main', 'Main', 'Main + Pilot', 'Replication', 'Replication', 'All'),
                                    c('p-value (Excuse = Control)', getp(model1), getp(model2), getp(model3), 
-                                     getp(model4), getp(model5), getp(model5), getp(model6))))
+                                     '', '', getp(model6))))
   
-  means = str_interp('DV mean & ${mean_main} & ${mean_main} & ${mean_main} & ${mean_all} & ${mean_all} & ${mean_all} \\\\')
-  sds = str_interp('DV std. dev. & ${sd_main} & ${sd_main} & ${sd_main} & ${sd_all} & ${sd_all} & ${sd_all} \\\\')
-  pilot_note = 'Include pilot data & No & No & No & Yes & Yes & Yes \\\\'
-  
-  out = c(out[1:20], out[24], out[21:23], '\\midrule', pilot_note, '\\addlinespace', means, sds, out[25:31])
+  means = str_interp('DV mean & ${mean_main} & ${mean_main} & ${mean_pil} & ${mean_rep} & ${mean_rep} & ${mean_all} \\\\')
+  sds = str_interp('DV std. dev. & ${sd_main} & ${sd_main} & ${sd_pil} & ${sd_rep} & ${sd_rep} & ${sd_all} \\\\')
+
+  out = c(out[1:20], out[24], out[21:23], '\\midrule', '\\addlinespace', means, sds, out[25:31])
   out = star_notes_tex(out, note.type = 'threeparttable', note = tablenotes[["t2-main"]])
 
   writeLines(out, con = str_interp('output/tables/t2-main${previous_tag}.tex'))
   
-  out = c(out[1:4], out[6:32], out[34:35], out[37:38])
+  out = c(out[1:4], out[6:31], out[33:34], out[36:37])
   
   writeLines(out, con = str_interp('output/tables/t2-main${previous_tag}-slides.tex'))
   
   summary = data %>% 
     mutate(condition = factor(condition, levels = c('Control','No Excuse', 'Excuse'))) %>%
     group_by(condition) %>% 
-    summarise(mean = mean(donated), se = sd(donated)/sqrt(n()))
+    summarise(mean = mean(donated), se = sd(donated)/sqrt(n()), value = str_pad(round(mean, 3), 3))
   
   make_figure = function(summary) {
     
     textsize=5
-    tl = 0.1
+    tl = 0.05
     
     plot = ggplot(summary, aes(x = condition, y = mean, fill = condition)) + 
       geom_bar(stat='identity', alpha=0.65, width=0.5) +
@@ -106,11 +116,23 @@ main_results = function(data, drop_previous) {
       geom_signif(comparisons = list(c('Control','Excuse')), annotations=str_interp('p=${p_excuse_control}'), textsize = textsize, y_position=0.69, tip_length=tl) +
       geom_signif(comparisons = list(c('Control','No Excuse')), annotations=str_interp('p=${p_control_noexcuse}'), textsize = textsize, y_position=0.55, tip_length = tl) +
       ylab('Donation rate') +
+      geom_text(aes(x=condition, y = 0.02, label=value, vjust='bottom'), family = 'LM Roman 10', size = 6) +
       coord_cartesian(ylim=c(0, 0.8)) +
       theme_excuses
     
-      
     ggsave(str_interp('output/figures/f2-main${previous_tag}.pdf'), width=8, height=6, plot)
+    
+    plot = ggplot(summary %>% filter(condition!='Control'), aes(x = condition, y = mean, fill = condition)) + 
+      geom_bar(stat='identity', alpha=0.65, width=0.5) +
+      geom_errorbar(aes(ymin = mean-1.96*se, ymax = mean+1.96*se,col = condition), position = 'dodge', alpha=1, width=0.5) +
+      geom_signif(comparisons = list(c('No Excuse','Excuse')), annotations=str_interp('p=${p_excuse_noexcuse}'), textsize = textsize, y_position = 0.62, tip_length = tl) +
+      ylab('Donation rate') +
+      coord_cartesian(ylim=c(0, 0.8)) +
+      geom_text(aes(x=condition, y = 0.02, label=value, vjust='bottom'), family = 'LM Roman 10', size = 6) +
+      theme_excuses +
+      two_palette
+    
+    ggsave(str_interp('output/figures/f2-main${previous_tag}-nocontrol.png'), width=8, height=6, plot)
   }
   make_figure(summary)
   
@@ -152,16 +174,15 @@ party_heterogeneity = function(data, drop_previous) {
                   covariate.labels = c('Excuse', 'Control'),
                   column.separate = c(2, 2), column.labels = c('Republicans', 'Independents'),
                   keep.stat = c('rsq','adj.rsq', 'n'), dep.var.labels = 'Donated to Fund the Wall',
-                  title = 'Experiment 1: Party heterogeneity', label = 't:2-partyheterogeneity',
+                  title = 'Experiment 2: Party heterogeneity', label = 't:2-partyheterogeneity',
                   add.lines = list(c('Demographic controls', rep('Yes', 4)),
-                                   c('Partisan affiliation controls', rep('Yes', 4)),
                                    c('p-value (Excuse = Control)', getp(model1), getp(model2), getp(model3), getp(model4))))
   
   means = str_interp('DV mean & ${mean_main_rep} & ${mean_all_rep} & ${mean_main_ind} & ${mean_all_ind} \\\\')
   sds = str_interp('DV std. dev. & ${sd_main_rep} & ${sd_all_rep} & ${sd_main_ind} & ${sd_all_rep} \\\\')
   pilot_note = 'Include pilot data & No & Yes & No & Yes \\\\'
   
-  out = c(out[1:21], out[25], out[22:24], '\\midrule', pilot_note, '\\addlinespace', means, sds, out[26:32])
+  out = c(out[1:21], out[25], out[22:24], '\\midrule', pilot_note, '\\addlinespace', means, sds, out[26:length(out)])
   
   writeLines(star_notes_tex(out, note.type = 'threeparttable', note = tablenotes[["t2-partyheterogeneity"]]),
              con = str_interp('output/tables/t2-partyheterogeneity${previous_tag}.tex'))
@@ -169,7 +190,7 @@ party_heterogeneity = function(data, drop_previous) {
   summary = data %>% 
     mutate(condition = factor(condition, levels = c('Control','No Excuse', 'Excuse'))) %>%
     group_by(condition, rep) %>% 
-    summarise(mean = mean(donated), se = sd(donated)/sqrt(n())) %>%
+    summarise(mean = mean(donated), se = sd(donated)/sqrt(n()), value = str_pad(round(mean, 2), 2)) %>%
     mutate(party= ifelse(rep==1, 'Republican', 'Independent'))
 
   textsize=4.5
@@ -181,6 +202,7 @@ party_heterogeneity = function(data, drop_previous) {
     geom_signif(comparisons = list(c('No Excuse','Excuse')), annotations=str_interp('p=${p_excuse_noexcuse_rep}'), textsize = textsize, y_position = 0.82, tip_length = tl) +
     geom_signif(comparisons = list(c('Control','Excuse')), annotations=str_interp('p=${p_excuse_control_rep}'), textsize = textsize, y_position=0.89, tip_length=tl) +
     geom_signif(comparisons = list(c('Control','No Excuse')), annotations=str_interp('p=${p_control_noexcuse_rep}'), textsize = textsize, y_position=0.75, tip_length = tl) +
+    geom_text(aes(x=condition, y = 0.02, label=value, vjust='bottom'), family = 'LM Roman 10', size = 6) +
     ylab('Donation rate') + 
     coord_cartesian(ylim=c(0, 0.95)) +
     theme_excuses
@@ -193,6 +215,7 @@ party_heterogeneity = function(data, drop_previous) {
     geom_signif(comparisons = list(c('No Excuse','Excuse')), annotations=str_interp('p=${p_excuse_noexcuse_ind}'), textsize = textsize, y_position = 0.46, tip_length = tl) +
     geom_signif(comparisons = list(c('Control','Excuse')), annotations=str_interp('p=${p_excuse_control_ind}'), textsize = textsize, y_position=0.5, tip_length=tl) +
     geom_signif(comparisons = list(c('Control','No Excuse')), annotations=str_interp('p=${p_control_noexcuse_ind}'), textsize = textsize, y_position=0.42, tip_length = tl) +
+    geom_text(aes(x=condition, y = 0.02, label=value, vjust='bottom'), family='LM Roman 10', size = 6) +
     ylab('Donation rate') +
     coord_cartesian(ylim=c(0, 0.55)) +
     theme_excuses
@@ -208,51 +231,43 @@ city_heterogeneity = function(data, drop_previous) {
     previous_tag = '-previous'
   }
   
-  model1 = lm(donated~excuse*share_rep+control*share_rep+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=data  %>% dplyr::filter(main==1))
-  model2 = lm(donated~excuse*share_rep+control*share_rep+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=data  %>% dplyr::filter())
-  model3 = lm(donated~excuse*share_rep+control*share_rep+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=data  %>% dplyr::filter(main==1, rep==1))
-  model4 = lm(donated~excuse*share_rep+control*share_rep+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=data  %>% dplyr::filter(rep==1))
-  model5 = lm(donated~excuse*share_rep+control*share_rep+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=data  %>% dplyr::filter(main==1, rep==0))
-  model6 = lm(donated~excuse*share_rep+control*share_rep+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=data  %>% dplyr::filter(rep==0))
+  model1 = lm(donated~excuse*share_rep+control*share_rep, data=data  %>% dplyr::filter(main==1))
+  model2 = lm(donated~excuse*share_rep+control*share_rep+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=data  %>% dplyr::filter(main==1))
+  model3 = lm(donated~excuse*share_rep+control*share_rep+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=data  %>% dplyr::filter())
+  model4 = lm(donated~excuse*share_rep+control*share_rep, data=allwaves %>% dplyr::filter(replication==1))
+  model5 = lm(donated~excuse*share_rep+control*share_rep+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=allwaves %>% dplyr::filter(replication==1))
+  model6 = lm(donated~excuse*share_rep+control*share_rep+age+I(age^2)+race+hisp+male+education+as.factor(partisan), data=allwaves)
   
-  vars.order = c('excuse','excuse:share_rep', 'control','control:share_rep', 'share_rep')
+  vars.order = c('excuse','excuse:share_rep', 'control','share_rep:control', 'share_rep')
   out = stargazer(list(model1, model2, model3, model4, model5, model6), 
                   omit='age|race|hisp|male|partisan|education|Constant', 
                   order = paste0("^", vars.order , "$"),
                   covariate.labels = c('Excuse', 'Excuse $\\times$ County Republican vote share', 'Control', 'Control $\\times$ County Republican vote share', 'County Republican vote share'),
-                  column.separate = c(2, 2, 2), column.labels = c('All', 'Republicans', 'Independents'),
                   keep.stat = c('rsq','adj.rsq', 'n'), dep.var.labels = 'Donated to Fund the Wall',
-                  title = 'Experiment 1: County heterogeneity', label = 't:2-cityheterogeneity',
-                  add.lines = list(c('Demographic controls', rep('Yes', 6)),
-                                   c('Partisan affiliation controls', rep('Yes', 6))))
+                  title = 'Experiment 2: County heterogeneity', label = 't:2-cityheterogeneity',
+                  add.lines = list(c('Demographic controls', 'No', 'Yes', 'Yes', 'No', 'Yes', 'Yes'),
+                                   c('Waves included', 'Main', 'Main', 'Main + Pilot', 'Replication', 'Replication', 'All')))
+  
   mean_main = formatC(mean(data$donated[data$main==1]), digits=3, format='f')
-  mean_all = format(mean(data$donated), digits=3, format='f')
+  mean_pil = format(mean(data$donated), digits=3, format='f')
+  mean_rep = formatC(mean(allwaves$donated[allwaves$replication==1]), digits=3, format='f')
+  mean_all = format(mean(allwaves$donated), digits=3, format='f')
   sd_main = formatC(sd(data$donated[data$main==1]), format='f', digits=3)
-  sd_all = formatC(sd(data$donated), digits=3, format='f')
-  means = str_interp('DV mean & ${mean_main} & ${mean_all} & ${mean_main} & ${mean_all} & ${mean_main} & ${mean_all} \\\\')
-  sds = str_interp('DV std. dev. & ${sd_main} & ${sd_all} & ${sd_main} & ${sd_all} & ${sd_main} & ${sd_all} \\\\')
-  pilot_note = 'Include pilot data & No & Yes & No & Yes & No & Yes \\\\'  
-  out = c(out[1:33], '\\midrule', pilot_note, '\\addlinespace', means, sds, out[34:40])
+  sd_pil = formatC(sd(data$donated), digits=3, format='f')
+  sd_rep = formatC(sd(allwaves$donated[allwaves$replication==1]), digits=3, format='f')
+  sd_all = formatC(sd(allwaves$donated), digits=3, format='f')
+  
+  means = str_interp('DV mean & ${mean_main} & ${mean_main} & ${mean_pil} & ${mean_rep} & ${mean_rep} & ${mean_all} \\\\')
+  sds = str_interp('DV std. dev. & ${sd_main} & ${sd_main} & ${sd_pil} & ${sd_rep} & ${sd_rep} & ${sd_all} \\\\')
+  
+  out = c(out[1:32], '\\midrule', means, sds, out[33:39])
   out = star_notes_tex(out, note.type = 'threeparttable', note = tablenotes[["t2-cityheterogeneity"]])
   writeLines(out,
              con = str_interp('output/tables/t2-cityheterogeneity-continuous${previous_tag}.tex'))
-  out_slides_full = c(out[1:4], out[6:37], out[40:41], out[43:44], out[46:47])
+  out_slides_full = c(out[1:4], out[6:38], out[40:41], out[43:44])
   writeLines(out_slides_full,
              con = str_interp('output/tables/t2-cityheterogeneity-continuous${previous_tag}-fullslides.tex'))
 
-  vars.order = c('excuse','excuse:share_rep', 'share_rep')
-  out = stargazer(list(model1, model2), 
-                  omit='age|race|hisp|male|partisan|education|Constant|control', 
-                  order = paste0("^", vars.order , "$"),
-                  covariate.labels = c('Excuse', 'Excuse $\\times$ Rep share', 'Rep share'),
-                  keep.stat = c('rsq', 'n'), dep.var.labels = 'Donated to Fund the Wall',
-                  title = 'Experiment 1: County heterogeneity', label = 't:2-cityheterogeneity-slides')
-  pilot_note = 'Include pilot data & No & Yes \\\\'  
-  means = str_interp('DV mean & ${mean_main} & ${mean_all} \\\\')
-  sds = str_interp('DV std. dev. & ${sd_main} & ${sd_all} \\\\')
-  out_slides = c(out[1:4], out[6:24], '\\midrule', pilot_note, means, sds, out[25:30])
-  writeLines(out_slides,
-             con = str_interp('output/tables/t2-cityheterogeneity-continuous${previous_tag}-slides.tex'))
 }
 
 purpose = function(data) {
@@ -277,9 +292,8 @@ purpose = function(data) {
                   omit='age|race|hisp|male|partisan|education|Constant',
                   covariate.labels = c('Excuse', 'Control'),
                   keep.stat = c('rsq','adj.rsq', 'n'), dep.var.labels = c('Excuse','Immigration attitudes','Public image','Information','Persuasion','Biased'),
-                  title = 'Experiment 1: Perceived purpose of study', label = 't:2-purpose',
+                  title = 'Experiment 2: Perceived purpose of study', label = 't:2-purpose',
                   add.lines = list(c('Demographic controls', rep('Yes', 6)),
-                                   c('Partisan affiliation controls', rep('Yes',6 )),
                                    c('p-value (Excuse = Control)', getp(excuse_model), getp(immigration_attitude_model), 
                                      getp(public_image_model), getp(information_model), getp(persuasion_model), getp(bias_model))))
   
@@ -287,18 +301,17 @@ purpose = function(data) {
   sds = str_interp("DV std. dev. & ${summarystats[['sds']][1]} & ${summarystats[['sds']][2]} & ${summarystats[['sds']][3]} & ${summarystats[['sds']][4]} & ${summarystats[['sds']][5]} & ${summarystats[['sds']][6]} \\\\")
   pilot_note = 'Include pilot data & Yes & Yes & Yes & Yes & Yes & Yes \\\\'
   
-  out = c(out[1:19], out[23], out[20:22], '\\midrule', pilot_note, '\\addlinespace', means, sds, out[24:30])
+  out = c(out[1:19], out[22], out[20:21], '\\midrule', pilot_note, '\\addlinespace', means, sds, out[23:29])
   out = star_notes_tex(out, note.type = 'threeparttable', note = tablenotes[["t2-purpose"]])
   
   writeLines(out, con = str_interp('output/tables/t2-purpose.tex'))
   
-  out = c(out[1:4], out[6:31], out[33:34], out[36:37])
+  out = c(out[1:4], out[6:30], out[32:33], out[35:36])
   out[9] = " & \\multicolumn{6}{c}{\\textit{Dependent variable: Perceived purpose of survey}} \\\\ " 
   out[11] = " & Excuse & Imm. attitudes & Publicity & Info. & Persuasion & Biased \\\\ "
   out[20] = str_replace(out[20], fixed('p-value (Excuse = Control)'), 'p-value (Ex. = Ctrl.)')
-  out[22] = "Demo controls & Yes & Yes & Yes & Yes & Yes & Yes \\\\ " 
-  out[23] = "Partisan controls & Yes & Yes & Yes & Yes & Yes & Yes \\\\ " 
-  writeLines(out, con = str_interp('output/tables/t2-purpose-slides.tex'))
+  out[22] = "Demo. controls & Yes & Yes & Yes & Yes & Yes & Yes \\\\ " 
+  writeLines(out[-23], con = str_interp('output/tables/t2-purpose-slides.tex'))
   
 }
 
@@ -316,7 +329,7 @@ attrition = function(data) {
                   covariate.labels = c(vars, vars_int),
                   omit = 'Constant',
                   keep.stat = c('rsq','adj.rsq', 'n'), column.labels = c('Respondent attrited post-randomization'),
-                  title = 'Experiment 1: Attrition', label = 't:2-attrition')
+                  title = 'Experiment 2: Attrition', label = 't:2-attrition')
   out = star_notes_tex(out, note.type = 'threeparttable', note = tablenotes[["t2-attrition"]])
   template = readLines('code/templates/longtable-template.txt')
   noexcuse_mean = formatC(mean(data$attrit[data$noexcuse==1], na.rm=T), digits=3, format='f')
@@ -364,7 +377,7 @@ make_balance = function(data) {
   rows = c(rows[1], '\\addlinespace', rows[2:5], '\\addlinespace', rows[6], '\\addlinespace', rows[7:8], '\\addlinespace', rows[9])
   
   template = readLines('code/templates/exp2-balance-template.tex')
-  out = c(template[1:2], '\\caption{Experiment 1: Balance of covariates}', 
+  out = c(template[1:2], '\\caption{Experiment 2: Balance of covariates}', 
           '\\label{t:2-balance}', template[5:13], unlist(rows), template[14:19])
   writeLines(out, 'output/tables/t2-balance.tex')
   out = c(out[1:2], out[4:29], '\\end{threeparttable} \\end{table}')
@@ -397,6 +410,7 @@ for (dp in c(T, F)) {
   party_heterogeneity(data, drop_previous = dp)
   city_heterogeneity(data, drop_previous=dp)
 }
+
 purpose(data)
 attrition(data_all)
 make_balance(data)
