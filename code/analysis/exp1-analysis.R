@@ -248,7 +248,8 @@ make_figure = function(data) {
 
 attrition = function(data) {
   data = data %>% 
-    mutate(condition = factor(condition, levels = c('No Excuse','Excuse')))
+    mutate(condition = factor(condition, levels = c('No Excuse','Excuse'))) %>% 
+    filter(main==1)
   model = lm(attrit ~ age+I(age^2)+race+hisp+male+education+as.factor(partisan)+
                excuse:(age+I(age^2)+race+hisp+male+education+as.factor(partisan)), 
              data=data)

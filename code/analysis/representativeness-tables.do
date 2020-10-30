@@ -63,6 +63,7 @@ save "$data/pew", replace
 ********************************************************
 
 use "$data/exp1.dta", clear
+keep if previous_lott == 0
 
 gen black = race == "African American/Black"
 gen asian = race == "Asian/Asian American"
@@ -96,6 +97,7 @@ save `receiver_sum'
 ********************************************************
 
 use "$data/exp2.dta", clear
+keep if previous_lott == 0
 
 gen black = race == "African American/Black"
 gen asian = race == "Asian/Asian American"
@@ -241,7 +243,7 @@ foreach var of varlist `sumvar' {
 
 	`fwt' "\bottomrule" _n
 	`fwt' "\bottomrule" _n
-	`fwt' "\multicolumn{`++cols'}{p{10cm}}{\footnotesize \textit{Notes:} Mean of respondent characteristics in experiment 2 and the 2018 Pew Research Center's American Trends Panel Wave 39. Attriters dropped from sample.}" _n
+	`fwt' "\multicolumn{`++cols'}{p{10cm}}{\footnotesize \textit{Notes:} Table displays mean characteristics for the Experiment 1 sample and the 2018 Pew Research Center's American Trends Panel, Wave 39. Attriters dropped from sample.}" _n
 	`fwt' "`footer'" _n
 		
 	file close table
@@ -335,7 +337,7 @@ foreach var of varlist `sumvar' {
 	
 	`fwt' "\bottomrule" _n
 	`fwt' "\bottomrule" _n
-	`fwt' "\multicolumn{`++cols'}{p{10cm}}{\footnotesize \textit{Notes:} Mean of respondent characteristics in experiment 1 and the 2018 Pew Research Center's American Trends Panel Wave 39. Attriters dropped from sample.}" _n
+	`fwt' "\multicolumn{`++cols'}{p{10cm}}{\footnotesize \textit{Notes:} Table displays mean respondent characteristics from the Experiment 2 sample and the 2018 Pew Research Center's American Trends Panel Wave, 39. Attriters dropped from sample.}" _n
 	`fwt' "`footer'" _n
 		
 	file close table

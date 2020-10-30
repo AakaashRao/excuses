@@ -317,10 +317,13 @@ purpose = function(data) {
 
 attrition = function(data) {
   data = data %>% 
-    mutate(condition = factor(condition, levels = c('No Excuse','Control','Excuse')))
+    mutate(condition = factor(condition, levels = c('No Excuse','Control','Excuse'))) %>% 
+    filter(main==1, control!=1)
+  
   model = lm(attrit ~ age+I(age^2)+race+hisp+male+education+as.factor(partisan)+
                excuse:(age+I(age^2)+race+hisp+male+education+as.factor(partisan)), 
-             data=data %>% filter(!control))
+             data=data)
+  
   vars = c('Age', 'Age squared', 'Black', 'Asian', 'White', 'Hispanic',
            'Male', 'High school', 'Some college, no degree', 'Associate degree',
            'Bachelor degree', 'Post-bachelor degree', 'Rep-leaning Ind', 'Weak Rep', 'Strong Rep')
